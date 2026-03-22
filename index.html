@@ -384,11 +384,11 @@
           >
             <div
               class="flex items-center gap-2 border-2 border-black hover:border-primary cursor-pointer group bg-white"
-              onclick="addLayer('image', '/assets/objects.png', 'objects_olee')"
+              onclick="addLayer('image', 'assets/objects.png', 'objects_olee')"
             >
               <img
                 class="w-10 h-10 object-cover grayscale group-hover:grayscale-0 flex-shrink-0 block"
-                src="/assets/objects.png"
+                src="assets/objects.png"
               />
               <span class="font-mono text-[9px] uppercase truncate"
                 >objects_olee</span
@@ -396,11 +396,11 @@
             </div>
             <div
               class="flex items-center gap-2 border-2 border-black hover:border-primary cursor-pointer group bg-white"
-              onclick="addLayer('image', '/assets/default.jpg', 'SCAVI_MAP')"
+              onclick="addLayer('image', 'assets/default.jpg', 'SCAVI_MAP')"
             >
               <img
                 class="w-10 h-10 object-cover grayscale group-hover:grayscale-0 flex-shrink-0 block"
-                src="/assets/default.jpg"
+                src="assets/default.jpg"
               />
               <span class="font-mono text-[9px] uppercase truncate"
                 >SCAVI_MAP</span
@@ -2744,7 +2744,7 @@
 
       // ===== INIT =====
       window.onload = () => {
-        addLayer("image", "/assets/default.jpg", "SCAVI_MAP");
+        addLayer("image", "assets/default.jpg", "SCAVI_MAP");
         undoStack = []; // Clear initial state from stack so first undo goes to empty canvas
       };
     </script>

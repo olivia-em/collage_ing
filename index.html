@@ -1,0 +1,2752 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>collage.ing | industrial brutalism</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display&family=Anton&family=Bebas+Neue&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;700&family=Abril+Fatface&family=Roboto+Mono:wght@400;700&family=IBM+Plex+Mono:wght@400;700&family=Cormorant+Garamond:wght@400;700&family=Exo+2:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='18' height='18' fill='%23bc0100'/%3E%3Crect x='10' y='10' width='18' height='18' fill='none' stroke='%230001c0' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <style>
+      body {
+        font-family: "Courier New", Courier, monospace !important;
+        cursor: crosshair;
+        user-select: none;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+        font-size: 20px;
+        display: inline-block;
+        line-height: 1;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #e2e2e2;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #bc0100;
+      }
+
+      .canvas-dot-grid {
+        background-image: radial-gradient(#bc0100 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+
+      .layer-selected {
+        outline: 2px dashed #0001c0 !important;
+        outline-offset: 4px;
+        /* intentionally no z-index override — selection must not reorder layers */
+      }
+
+      .draggable {
+        cursor: move;
+        touch-action: none;
+      }
+
+      .panel-hidden {
+        display: none !important;
+      }
+
+      input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        padding: 0;
+      }
+      input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+      }
+      input[type="color"]::-webkit-color-swatch {
+        border: 2px solid black;
+      }
+
+      .resize-handle {
+        width: 10px;
+        height: 10px;
+        background: #0001c0;
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        cursor: nwse-resize;
+        display: none;
+        z-index: 101;
+      }
+      .layer-selected .resize-handle {
+        display: block;
+      }
+
+      .canvas-resize-handle {
+        width: 16px;
+        height: 16px;
+        background: #bc0100;
+        position: absolute;
+        right: -8px;
+        bottom: -8px;
+        cursor: nwse-resize;
+        border: 2px solid black;
+        z-index: 10;
+      }
+
+      #artboard {
+        transform-origin: top left;
+        flex-shrink: 0;
+      }
+
+      .crop-mode {
+        overflow: hidden;
+      }
+      .crop-mode img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Toolbar icon buttons — icon only, no text */
+      .icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        transition: none;
+      }
+      .icon-btn:hover {
+        background: #0001c0;
+        color: white;
+      }
+      .icon-btn:hover .material-symbols-outlined {
+        color: white;
+      }
+
+      .sidebar-icon-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        aspect-ratio: 1;
+        border-bottom: 1px solid black;
+        cursor: pointer;
+        background: transparent;
+        transition: none;
+      }
+      .sidebar-icon-btn:hover {
+        background: #bc0100;
+        color: white;
+      }
+      .sidebar-icon-btn.active {
+        background: #0001c0;
+        color: white;
+      }
+      .sidebar-icon-btn.active .material-symbols-outlined {
+        color: white;
+      }
+      .sidebar-icon-btn:hover .material-symbols-outlined {
+        color: white;
+      }
+
+      /* Tooltip for icon-only buttons */
+      .icon-btn[title]:hover::after,
+      .sidebar-icon-btn[title]:hover::after {
+        content: attr(title);
+        position: absolute;
+        left: calc(100% + 4px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: #1b1b1b;
+        color: #f9f9f9;
+        font-family: "Courier New", monospace;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        padding: 3px 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 9999;
+      }
+
+      /* Range inputs */
+      input[type="range"] {
+        -webkit-appearance: none;
+        height: 2px;
+        background: #1b1b1b;
+        outline: none;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 10px;
+        height: 10px;
+        background: #bc0100;
+        cursor: pointer;
+        border: 1px solid black;
+      }
+
+      .filter-btn {
+        font-family: "Courier New", monospace;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        padding: 4px 8px;
+        border: 2px solid black;
+        cursor: pointer;
+        background: white;
+        transition: none;
+      }
+      .filter-btn:hover,
+      .filter-btn.active {
+        background: black;
+        color: white;
+      }
+
+      .snap-indicator {
+        position: absolute;
+        background: #0001c0;
+        pointer-events: none;
+        z-index: 200;
+        opacity: 0;
+      }
+      .snap-h {
+        width: 100%;
+        height: 1px;
+        left: 0;
+      }
+      .snap-v {
+        width: 1px;
+        height: 100%;
+        top: 0;
+      }
+      .snap-visible {
+        opacity: 1;
+      }
+    </style>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              tertiary: "#5c5c5c",
+              "secondary-container": "#080cff",
+              "surface-container-highest": "#e2e2e2",
+              "on-primary-container": "#fffbff",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#603e39",
+              background: "#f9f9f9",
+              error: "#ba1a1a",
+              "surface-dim": "#dadada",
+              surface: "#f9f9f9",
+              "inverse-surface": "#303030",
+              secondary: "#0001c0",
+              "on-background": "#1b1b1b",
+              "on-surface": "#1b1b1b",
+              "surface-variant": "#e2e2e2",
+              "surface-container-low": "#f3f3f3",
+              "on-primary": "#ffffff",
+              "surface-container-high": "#e8e8e8",
+              outline: "#956d67",
+              "surface-container-lowest": "#ffffff",
+              "surface-container": "#eeeeee",
+              "primary-container": "#eb0000",
+              primary: "#bc0100",
+              "primary-fixed": "#ffdad4",
+            },
+            borderRadius: { DEFAULT: "0px", lg: "0px", xl: "0px", full: "0px" },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-background text-on-surface overflow-hidden">
+    <!-- TOP NAV -->
+    <nav
+      class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-12 bg-[#f9f9f9] border-b-2 border-black"
+    >
+      <div class="flex items-center gap-6">
+        <span
+          class="text-xl font-bold font-mono tracking-tighter text-[#bc0100]"
+          >collage.ing</span
+        >
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          class="flex items-center gap-2 bg-primary text-white px-3 py-1 font-mono text-[10px] uppercase tracking-widest border-b-2 border-r-2 border-black hover:invert"
+          onclick="exportCanvas()"
+          title="Export PNG"
+        >
+          <span class="material-symbols-outlined" style="font-size: 16px"
+            >file_download</span
+          >
+          EXPORT .PNG
+        </button>
+      </div>
+    </nav>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside
+      class="fixed right-0 top-12 bottom-0 flex flex-row bg-[#e2e2e2] w-80 border-l-2 border-black z-40"
+    >
+      <!-- Icon Tab Strip -->
+      <div class="w-14 flex flex-col items-center border-r border-black">
+        <button
+          class="sidebar-icon-btn active"
+          id="btn-assets"
+          onclick="toggleSidebar('assets')"
+          title="Assets"
+        >
+          <span class="material-symbols-outlined" style="font-size: 22px"
+            >photo_library</span
+          >
+        </button>
+        <button
+          class="sidebar-icon-btn"
+          id="btn-text"
+          onclick="toggleSidebar('text')"
+          title="Text"
+        >
+          <span class="material-symbols-outlined" style="font-size: 22px"
+            >title</span
+          >
+        </button>
+        <button
+          class="sidebar-icon-btn"
+          id="btn-shapes"
+          onclick="toggleSidebar('shapes')"
+          title="Shapes"
+        >
+          <span class="material-symbols-outlined" style="font-size: 22px"
+            >shapes</span
+          >
+        </button>
+        <button
+          class="sidebar-icon-btn"
+          id="btn-props"
+          onclick="toggleSidebar('props')"
+          title="Properties"
+        >
+          <span class="material-symbols-outlined" style="font-size: 22px"
+            >tune</span
+          >
+        </button>
+        <button
+          class="sidebar-icon-btn"
+          id="btn-layers"
+          onclick="toggleSidebar('layers')"
+          title="Layers"
+        >
+          <span class="material-symbols-outlined" style="font-size: 22px"
+            >layers</span
+          >
+        </button>
+      </div>
+
+      <!-- Panel Area -->
+      <div class="flex-1 overflow-hidden relative bg-white">
+        <!-- ASSETS PANEL -->
+        <div class="absolute inset-0 flex flex-col" id="panel-assets">
+          <div
+            class="p-3 border-b-2 border-black bg-surface flex items-center justify-between"
+          >
+            <span
+              class="font-mono text-[10px] uppercase font-bold tracking-widest text-secondary"
+              >// LIBRARY</span
+            >
+          </div>
+          <div
+            class="flex-1 overflow-y-auto p-2 flex flex-col gap-1"
+            id="assets-list"
+          >
+            <div
+              class="flex items-center gap-2 border-2 border-black hover:border-primary cursor-pointer group bg-white"
+              onclick="addLayer('image', '/assets/objects.png', 'objects_olee')"
+            >
+              <img
+                class="w-10 h-10 object-cover grayscale group-hover:grayscale-0 flex-shrink-0 block"
+                src="/assets/objects.png"
+              />
+              <span class="font-mono text-[9px] uppercase truncate"
+                >objects_olee</span
+              >
+            </div>
+            <div
+              class="flex items-center gap-2 border-2 border-black hover:border-primary cursor-pointer group bg-white"
+              onclick="addLayer('image', '/assets/default.jpg', 'SCAVI_MAP')"
+            >
+              <img
+                class="w-10 h-10 object-cover grayscale group-hover:grayscale-0 flex-shrink-0 block"
+                src="/assets/default.jpg"
+              />
+              <span class="font-mono text-[9px] uppercase truncate"
+                >SCAVI_MAP</span
+              >
+            </div>
+          </div>
+          <div class="p-3 border-t border-black">
+            <button
+              class="w-full bg-primary text-white border-2 border-black p-2 font-mono text-[9px] uppercase tracking-widest hover:invert flex items-center justify-center gap-2"
+              onclick="simulateUpload()"
+            >
+              <span class="material-symbols-outlined" style="font-size: 16px"
+                >upload</span
+              >
+              UPLOAD IMAGE
+            </button>
+          </div>
+        </div>
+
+        <!-- TEXT PANEL -->
+        <div
+          class="panel-hidden absolute inset-0 flex flex-col"
+          id="panel-text"
+        >
+          <div class="p-3 border-b-2 border-black bg-surface">
+            <span
+              class="font-mono text-[10px] uppercase font-bold tracking-widest text-secondary"
+              >// TYPOGRAPHY</span
+            >
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >String_Input</label
+              >
+              <textarea
+                class="w-full border-2 border-black p-2 font-mono text-[11px] h-20 outline-none resize-none"
+                id="text-content-input"
+                placeholder="ENTER TEXT..."
+              ></textarea>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Font_Family</label
+              >
+              <select
+                class="w-full border-2 border-black p-2 font-mono text-[11px] appearance-none bg-white"
+                id="text-font-input"
+              >
+                <option value="Courier New">COURIER_MONO</option>
+                <option value="Space Mono">SPACE_MONO</option>
+                <option value="Roboto Mono">ROBOTO_MONO</option>
+                <option value="IBM Plex Mono">IBM_PLEX_MONO</option>
+                <option value="Arial">SANS_PRIMARY</option>
+                <option value="Oswald">OSWALD</option>
+                <option value="Exo 2">EXO_2</option>
+                <option value="Anton">ANTON</option>
+                <option value="Bebas Neue">BEBAS_NEUE</option>
+                <option value="Impact">IMPACT_SLAB</option>
+                <option value="Abril Fatface">ABRIL_FATFACE</option>
+                <option value="Times New Roman">SERIF_VOID</option>
+                <option value="Playfair Display">PLAYFAIR_DISPLAY</option>
+                <option value="DM Serif Display">DM_SERIF</option>
+                <option value="Cormorant Garamond">CORMORANT</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Style</label
+              >
+              <div class="flex gap-1">
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[12px] font-bold hover:bg-black hover:text-white"
+                  onclick="toggleTextStyle('bold')"
+                  title="Bold"
+                >
+                  B
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[12px] italic hover:bg-black hover:text-white"
+                  onclick="toggleTextStyle('italic')"
+                  title="Italic"
+                >
+                  I
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[12px] underline hover:bg-black hover:text-white"
+                  onclick="toggleTextStyle('underline')"
+                  title="Underline"
+                >
+                  U
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[10px] hover:bg-black hover:text-white uppercase"
+                  onclick="toggleTextAllCaps()"
+                  title="All Caps"
+                >
+                  AA
+                </button>
+              </div>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Font_Size</label
+              >
+              <div class="flex items-center gap-2">
+                <input
+                  class="w-full"
+                  id="text-size-input"
+                  max="200"
+                  min="8"
+                  type="range"
+                  value="36"
+                  oninput="
+                    document.getElementById('text-size-val').innerText =
+                      this.value + 'px'
+                  "
+                />
+                <span
+                  class="font-mono text-[9px] w-12 text-right"
+                  id="text-size-val"
+                  >36px</span
+                >
+              </div>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Color</label
+              >
+              <div class="flex gap-2 items-center">
+                <div
+                  class="w-6 h-6 bg-black border border-black cursor-pointer"
+                  onclick="
+                    document.getElementById('text-color-preset').value =
+                      '#000000'
+                  "
+                ></div>
+                <div
+                  class="w-6 h-6 bg-[#bc0100] border border-black cursor-pointer"
+                  onclick="
+                    document.getElementById('text-color-preset').value =
+                      '#bc0100'
+                  "
+                ></div>
+                <div
+                  class="w-6 h-6 bg-[#0001c0] border border-black cursor-pointer"
+                  onclick="
+                    document.getElementById('text-color-preset').value =
+                      '#0001c0'
+                  "
+                ></div>
+                <div
+                  class="w-6 h-6 bg-white border-2 border-black cursor-pointer"
+                  onclick="
+                    document.getElementById('text-color-preset').value =
+                      '#ffffff'
+                  "
+                ></div>
+                <input
+                  class="ml-auto"
+                  id="text-color-preset"
+                  type="color"
+                  value="#bc0100"
+                />
+              </div>
+            </div>
+            <button
+              class="w-full bg-black text-white p-3 font-mono text-[10px] uppercase tracking-widest hover:bg-primary flex items-center justify-center gap-2"
+              onclick="addTextLayer()"
+            >
+              <span class="material-symbols-outlined" style="font-size: 16px"
+                >add</span
+              >
+              Insert Layer
+            </button>
+          </div>
+        </div>
+
+        <!-- SHAPES PANEL -->
+        <div
+          class="panel-hidden absolute inset-0 flex flex-col"
+          id="panel-shapes"
+        >
+          <div class="p-3 border-b-2 border-black bg-surface">
+            <span
+              class="font-mono text-[10px] uppercase font-bold tracking-widest text-secondary"
+              >// SHAPES</span
+            >
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Primitive</label
+              >
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  class="border-2 border-black p-3 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="addShapeLayer('rect')"
+                  title="Rectangle"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 22px"
+                    >rectangle</span
+                  >
+                </button>
+                <button
+                  class="border-2 border-black p-3 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="addShapeLayer('line')"
+                  title="Line"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 22px"
+                    >horizontal_rule</span
+                  >
+                </button>
+                <button
+                  class="border-2 border-black p-3 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="addShapeLayer('circle')"
+                  title="Circle"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 22px"
+                    >circle</span
+                  >
+                </button>
+              </div>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Fill_Color</label
+              >
+              <div class="flex items-center gap-2">
+                <input
+                  class="flex-shrink-0"
+                  id="shape-fill-color"
+                  type="color"
+                  value="#bc0100"
+                />
+                <div class="flex gap-1 flex-wrap">
+                  <div
+                    class="w-6 h-6 bg-black border-2 border-black cursor-pointer"
+                    onclick="
+                      document.getElementById('shape-fill-color').value =
+                        '#000000'
+                    "
+                  ></div>
+                  <div
+                    class="w-6 h-6 bg-[#bc0100] border-2 border-black cursor-pointer"
+                    onclick="
+                      document.getElementById('shape-fill-color').value =
+                        '#bc0100'
+                    "
+                  ></div>
+                  <div
+                    class="w-6 h-6 bg-[#0001c0] border-2 border-black cursor-pointer"
+                    onclick="
+                      document.getElementById('shape-fill-color').value =
+                        '#0001c0'
+                    "
+                  ></div>
+                  <div
+                    class="w-6 h-6 bg-white border-2 border-black cursor-pointer"
+                    onclick="
+                      document.getElementById('shape-fill-color').value =
+                        '#ffffff'
+                    "
+                  ></div>
+                  <div
+                    class="w-6 h-6 bg-transparent border-2 border-black cursor-pointer text-[8px] font-mono flex items-center justify-center"
+                    onclick="
+                      document.getElementById('shape-fill-color').value =
+                        'transparent'
+                    "
+                    title="No fill"
+                  >
+                    ∅
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Border_Color</label
+              >
+              <div class="flex items-center gap-2">
+                <input
+                  class="flex-shrink-0"
+                  id="shape-border-color"
+                  type="color"
+                  value="#000000"
+                />
+                <input
+                  class="w-16 border-2 border-black p-1 font-mono text-[10px]"
+                  id="shape-border-width"
+                  type="number"
+                  min="0"
+                  max="20"
+                  value="2"
+                  placeholder="PX"
+                />
+                <span class="font-mono text-[9px] text-tertiary">PX</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROPS PANEL -->
+        <div
+          class="panel-hidden absolute inset-0 flex flex-col"
+          id="panel-props"
+        >
+          <div
+            class="p-3 border-b-2 border-black bg-surface-container-highest flex justify-between items-center"
+          >
+            <span
+              class="font-mono text-[10px] font-extrabold uppercase tracking-widest"
+              >// PROPERTIES</span
+            >
+            <button
+              class="hover:text-primary flex items-center"
+              onclick="deleteSelectedLayer()"
+              title="Delete Layer"
+            >
+              <span class="material-symbols-outlined" style="font-size: 20px"
+                >delete</span
+              >
+            </button>
+          </div>
+          <div
+            class="flex-1 overflow-y-auto opacity-50 pointer-events-none"
+            id="properties-panel"
+          >
+            <!-- Layer ID -->
+            <div class="p-3 border-b border-black">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Layer_ID</label
+              >
+              <input
+                class="w-full bg-surface-container-low border-b-2 border-black p-2 font-mono text-[11px] outline-none"
+                id="prop-id"
+                oninput="renameSelectedLayer(this.value)"
+                type="text"
+              />
+            </div>
+            <!-- Handle Mode (images only) -->
+            <div class="p-3 border-b border-black" id="handle-mode-container">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Handle_Mode</label
+              >
+              <div class="flex border-2 border-black">
+                <button
+                  class="flex-1 p-2 font-mono text-[9px] uppercase flex items-center justify-center gap-1 bg-black text-white"
+                  id="mode-resize"
+                  onclick="setHandleMode('resize')"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 14px"
+                    >open_with</span
+                  >
+                  Resize
+                </button>
+                <button
+                  class="flex-1 p-2 font-mono text-[9px] uppercase flex items-center justify-center gap-1"
+                  id="mode-crop"
+                  onclick="setHandleMode('crop')"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 14px"
+                    >crop</span
+                  >
+                  Crop
+                </button>
+              </div>
+            </div>
+            <!-- Shape-specific controls -->
+            <div
+              class="p-3 border-b border-black hidden"
+              id="shape-controls-container"
+            >
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Shape_Style</label
+              >
+              <div class="space-y-3">
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Fill_Color</span
+                  >
+                  <div class="flex items-center gap-2">
+                    <input
+                      id="prop-shape-fill"
+                      type="color"
+                      value="#bc0100"
+                      oninput="updateShapeFill(this.value)"
+                    />
+                    <div class="flex gap-1">
+                      <div
+                        class="w-5 h-5 bg-black border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById('prop-shape-fill').value =
+                            '#000000';
+                          updateShapeFill('#000000');
+                        "
+                      ></div>
+                      <div
+                        class="w-5 h-5 bg-[#bc0100] border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById('prop-shape-fill').value =
+                            '#bc0100';
+                          updateShapeFill('#bc0100');
+                        "
+                      ></div>
+                      <div
+                        class="w-5 h-5 bg-[#0001c0] border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById('prop-shape-fill').value =
+                            '#0001c0';
+                          updateShapeFill('#0001c0');
+                        "
+                      ></div>
+                      <div
+                        class="w-5 h-5 bg-white border-2 border-black cursor-pointer"
+                        onclick="
+                          document.getElementById('prop-shape-fill').value =
+                            '#ffffff';
+                          updateShapeFill('#ffffff');
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Border_Color</span
+                  >
+                  <div class="flex items-center gap-2">
+                    <input
+                      id="prop-shape-border-color"
+                      type="color"
+                      value="#000000"
+                      oninput="updateShapeBorder()"
+                    />
+                    <div class="flex gap-1">
+                      <div
+                        class="w-5 h-5 bg-black border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById(
+                            'prop-shape-border-color',
+                          ).value = '#000000';
+                          updateShapeBorder();
+                        "
+                      ></div>
+                      <div
+                        class="w-5 h-5 bg-[#bc0100] border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById(
+                            'prop-shape-border-color',
+                          ).value = '#bc0100';
+                          updateShapeBorder();
+                        "
+                      ></div>
+                      <div
+                        class="w-5 h-5 bg-[#0001c0] border border-black cursor-pointer"
+                        onclick="
+                          document.getElementById(
+                            'prop-shape-border-color',
+                          ).value = '#0001c0';
+                          updateShapeBorder();
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Border_Width</span
+                  >
+                  <div class="flex items-center gap-2">
+                    <input
+                      class="flex-1 border-2 border-black p-1 font-mono text-[10px]"
+                      id="prop-shape-border-width"
+                      type="number"
+                      min="0"
+                      max="20"
+                      value="2"
+                      oninput="updateShapeBorder()"
+                    />
+                    <span class="font-mono text-[8px] text-tertiary">PX</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Flip / Rotate -->
+            <div class="p-3 border-b border-black">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Transform</label
+              >
+              <div class="flex gap-1 mb-2">
+                <button
+                  class="flex-1 border-2 border-black p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="flipLayer('x')"
+                  title="Flip Horizontal"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >flip</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="flipLayer('y')"
+                  title="Flip Vertical"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="
+                      font-size: 16px;
+                      transform: rotate(90deg);
+                      display: inline-block;
+                    "
+                    >flip</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="rotateLayer(-90)"
+                  title="Rotate CCW"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >rotate_left</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="rotateLayer(90)"
+                  title="Rotate CW"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >rotate_right</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                  onclick="duplicateLayer()"
+                  title="Duplicate"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >content_copy</span
+                  >
+                </button>
+              </div>
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="font-mono text-[8px] uppercase text-tertiary"
+                    >Rotation</span
+                  >
+                  <div class="flex items-center gap-1">
+                    <input
+                      class="w-14 border-2 border-black p-1 font-mono text-[10px] text-right"
+                      id="prop-rotation-num"
+                      type="number"
+                      min="-360"
+                      max="360"
+                      value="0"
+                      oninput="setRotationDirect(this.value)"
+                    />
+                    <span class="font-mono text-[8px] text-tertiary">°</span>
+                  </div>
+                </div>
+                <input
+                  class="w-full"
+                  id="prop-rotation"
+                  type="range"
+                  min="-180"
+                  max="180"
+                  value="0"
+                  oninput="
+                    setRotationDirect(this.value);
+                    document.getElementById('prop-rotation-num').value =
+                      this.value;
+                  "
+                />
+              </div>
+            </div>
+            <!-- Arrangement -->
+            <div class="p-3 border-b border-black">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Arrangement</label
+              >
+              <div class="flex gap-1">
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[8px] uppercase hover:bg-secondary hover:text-white flex items-center justify-center gap-1"
+                  onclick="changeZIndex(1)"
+                  title="Bring Forward"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >flip_to_front</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[8px] uppercase hover:bg-secondary hover:text-white flex items-center justify-center gap-1"
+                  onclick="changeZIndex(-1)"
+                  title="Send Backward"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >flip_to_back</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[8px] uppercase hover:bg-secondary hover:text-white flex items-center justify-center gap-1"
+                  onclick="updateSelectedStyle('zIndex', 999)"
+                  title="Bring to Front"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >vertical_align_top</span
+                  >
+                </button>
+                <button
+                  class="flex-1 border-2 border-black p-2 font-mono text-[8px] uppercase hover:bg-secondary hover:text-white flex items-center justify-center gap-1"
+                  onclick="updateSelectedStyle('zIndex', 0)"
+                  title="Send to Back"
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                    >vertical_align_bottom</span
+                  >
+                </button>
+              </div>
+              <div class="mt-2 flex items-center gap-2">
+                <span class="font-mono text-[8px] uppercase text-tertiary"
+                  >Z-Index</span
+                >
+                <input
+                  class="flex-1 border-2 border-black p-1 font-mono text-[10px]"
+                  id="prop-zindex"
+                  oninput="updateSelectedStyle('zIndex', this.value)"
+                  type="number"
+                />
+              </div>
+            </div>
+            <!-- Text-specific controls -->
+            <div
+              class="p-3 border-b border-black hidden"
+              id="text-controls-container"
+            >
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Text_Styling</label
+              >
+              <div class="space-y-3">
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Font_Family</span
+                  >
+                  <select
+                    class="w-full border-2 border-black p-1.5 font-mono text-[10px] appearance-none bg-white"
+                    id="prop-font-family"
+                    onchange="updateTextStyle('fontFamily', this.value)"
+                  >
+                    <option value="Courier New">COURIER_MONO</option>
+                    <option value="Space Mono">SPACE_MONO</option>
+                    <option value="Roboto Mono">ROBOTO_MONO</option>
+                    <option value="IBM Plex Mono">IBM_PLEX_MONO</option>
+                    <option value="Arial">SANS_PRIMARY</option>
+                    <option value="Oswald">OSWALD</option>
+                    <option value="Exo 2">EXO_2</option>
+                    <option value="Anton">ANTON</option>
+                    <option value="Bebas Neue">BEBAS_NEUE</option>
+                    <option value="Impact">IMPACT_SLAB</option>
+                    <option value="Abril Fatface">ABRIL_FATFACE</option>
+                    <option value="Times New Roman">SERIF_VOID</option>
+                    <option value="Playfair Display">PLAYFAIR_DISPLAY</option>
+                    <option value="DM Serif Display">DM_SERIF</option>
+                    <option value="Cormorant Garamond">CORMORANT</option>
+                  </select>
+                </div>
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Alignment</span
+                  >
+                  <div class="flex border-2 border-black">
+                    <button
+                      class="flex-1 p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                      onclick="updateTextStyle('textAlign', 'left')"
+                    >
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 16px"
+                        >format_align_left</span
+                      >
+                    </button>
+                    <button
+                      class="flex-1 p-2 border-x-2 border-black hover:bg-black hover:text-white flex items-center justify-center"
+                      onclick="updateTextStyle('textAlign', 'center')"
+                    >
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 16px"
+                        >format_align_center</span
+                      >
+                    </button>
+                    <button
+                      class="flex-1 p-2 hover:bg-black hover:text-white flex items-center justify-center"
+                      onclick="updateTextStyle('textAlign', 'right')"
+                    >
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 16px"
+                        >format_align_right</span
+                      >
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <span
+                    class="block font-mono text-[8px] uppercase mb-1 text-tertiary"
+                    >Style</span
+                  >
+                  <div class="flex gap-1">
+                    <button
+                      class="flex-1 border-2 border-black p-1.5 font-mono text-[11px] font-bold hover:bg-black hover:text-white"
+                      onclick="toggleTextStyle('bold')"
+                    >
+                      B
+                    </button>
+                    <button
+                      class="flex-1 border-2 border-black p-1.5 font-mono text-[11px] italic hover:bg-black hover:text-white"
+                      onclick="toggleTextStyle('italic')"
+                    >
+                      I
+                    </button>
+                    <button
+                      class="flex-1 border-2 border-black p-1.5 font-mono text-[11px] underline hover:bg-black hover:text-white"
+                      onclick="toggleTextStyle('underline')"
+                    >
+                      U
+                    </button>
+                    <button
+                      class="flex-1 border-2 border-black p-1.5 font-mono text-[9px] hover:bg-black hover:text-white uppercase"
+                      onclick="toggleTextAllCaps()"
+                    >
+                      AA
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="font-mono text-[8px] uppercase text-tertiary"
+                      >Font_Size</span
+                    >
+                    <span class="font-mono text-[8px]" id="prop-font-size-val"
+                      >36px</span
+                    >
+                  </div>
+                  <input
+                    class="w-full"
+                    id="prop-font-size"
+                    max="200"
+                    min="8"
+                    oninput="
+                      updateTextStyle('fontSize', this.value + 'px');
+                      document.getElementById('prop-font-size-val').innerText =
+                        this.value + 'px';
+                    "
+                    type="range"
+                    value="36"
+                  />
+                </div>
+                <div>
+                  <span
+                    class="block font-mono text-[8px] mb-1 uppercase text-tertiary"
+                    >Text_Color</span
+                  >
+                  <div class="flex gap-2 items-center flex-wrap">
+                    <div
+                      class="w-5 h-5 bg-black border border-black cursor-pointer flex-shrink-0"
+                      onclick="
+                        document.getElementById('prop-text-color').value =
+                          '#000000';
+                        updateTextStyle('color', '#000000');
+                      "
+                    ></div>
+                    <div
+                      class="w-5 h-5 bg-[#bc0100] border border-black cursor-pointer flex-shrink-0"
+                      onclick="
+                        document.getElementById('prop-text-color').value =
+                          '#bc0100';
+                        updateTextStyle('color', '#bc0100');
+                      "
+                    ></div>
+                    <div
+                      class="w-5 h-5 bg-[#0001c0] border border-black cursor-pointer flex-shrink-0"
+                      onclick="
+                        document.getElementById('prop-text-color').value =
+                          '#0001c0';
+                        updateTextStyle('color', '#0001c0');
+                      "
+                    ></div>
+                    <div
+                      class="w-5 h-5 bg-white border-2 border-black cursor-pointer flex-shrink-0"
+                      onclick="
+                        document.getElementById('prop-text-color').value =
+                          '#ffffff';
+                        updateTextStyle('color', '#ffffff');
+                      "
+                    ></div>
+                    <input
+                      class="ml-auto flex-shrink-0"
+                      id="prop-text-color"
+                      oninput="updateTextStyle('color', this.value)"
+                      type="color"
+                      value="#bc0100"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Blend Mode -->
+            <div class="p-3 border-b border-black">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-1 uppercase tracking-widest"
+                >Blend_Mode</label
+              >
+              <select
+                class="w-full border-2 border-black p-2 font-mono text-[10px] bg-white"
+                id="prop-blend"
+                onchange="updateSelectedStyle('mixBlendMode', this.value)"
+              >
+                <option value="normal">Normal</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="darken">Darken</option>
+                <option value="lighten">Lighten</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </div>
+            <!-- Opacity -->
+            <div class="p-3 border-b border-black">
+              <div class="flex justify-between items-center mb-2">
+                <label
+                  class="font-mono text-[9px] text-tertiary uppercase tracking-widest"
+                  >Opacity</label
+                >
+                <span
+                  class="font-mono text-[9px] font-bold"
+                  id="prop-opacity-val"
+                  >100%</span
+                >
+              </div>
+              <input
+                class="w-full"
+                id="prop-opacity"
+                max="100"
+                min="0"
+                oninput="updateOpacity(this.value)"
+                type="range"
+                value="100"
+              />
+            </div>
+            <!-- Dimensions -->
+            <div class="p-3 border-b border-black">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Dimensions</label
+              >
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <span class="block font-mono text-[8px] mb-1 text-tertiary"
+                    >W_PX</span
+                  >
+                  <input
+                    class="w-full border-2 border-black p-1 font-mono text-[10px]"
+                    id="prop-w"
+                    oninput="updateDimensions('width', this.value)"
+                    type="number"
+                  />
+                </div>
+                <div>
+                  <span class="block font-mono text-[8px] mb-1 text-tertiary"
+                    >H_PX</span
+                  >
+                  <input
+                    class="w-full border-2 border-black p-1 font-mono text-[10px]"
+                    id="prop-h"
+                    oninput="updateDimensions('height', this.value)"
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
+            <!-- Position -->
+            <div class="p-3">
+              <label
+                class="block font-mono text-[9px] text-tertiary mb-2 uppercase tracking-widest"
+                >Position</label
+              >
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <span class="block font-mono text-[8px] mb-1 text-tertiary"
+                    >X_PX</span
+                  >
+                  <input
+                    class="w-full border-2 border-black p-1 font-mono text-[10px]"
+                    id="prop-x"
+                    oninput="
+                      if (selectedLayer) {
+                        selectedLayer.style.left = this.value + 'px';
+                      }
+                    "
+                    type="number"
+                  />
+                </div>
+                <div>
+                  <span class="block font-mono text-[8px] mb-1 text-tertiary"
+                    >Y_PX</span
+                  >
+                  <input
+                    class="w-full border-2 border-black p-1 font-mono text-[10px]"
+                    id="prop-y"
+                    oninput="
+                      if (selectedLayer) {
+                        selectedLayer.style.top = this.value + 'px';
+                      }
+                    "
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYERS PANEL -->
+        <div
+          class="panel-hidden absolute inset-0 flex flex-col"
+          id="panel-layers"
+        >
+          <div
+            class="p-3 border-b-2 border-black bg-surface flex items-center justify-between"
+          >
+            <span
+              class="font-mono text-[10px] uppercase font-bold tracking-widest text-secondary"
+              >// LAYERS</span
+            >
+            <span
+              class="font-mono text-[9px] text-tertiary"
+              id="layer-count-display"
+              >0 layers</span
+            >
+          </div>
+          <div class="flex-1 overflow-y-auto" id="layers-list">
+            <div
+              class="p-4 font-mono text-[9px] text-tertiary uppercase text-center"
+            >
+              No layers yet.
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CANVAS AREA -->
+    <main
+      class="mr-80 mt-12 h-[calc(100vh-3rem)] relative bg-surface-container-low overflow-hidden"
+    >
+      <!-- Top Left Toolbar -->
+      <div
+        class="absolute top-3 left-3 z-40 bg-white border-2 border-black flex items-center divide-x-2 divide-black"
+        style="box-shadow: 3px 3px 0 rgba(0, 0, 0, 1)"
+      >
+        <!-- BG Color -->
+        <div
+          class="flex items-center px-2 gap-1 h-10"
+          title="Canvas Background"
+        >
+          <span
+            class="material-symbols-outlined text-tertiary"
+            style="font-size: 16px"
+            >palette</span
+          >
+          <input
+            id="canvas-bg-picker"
+            oninput="updateCanvasBg(this.value)"
+            type="color"
+            value="#ffffff"
+            style="width: 24px; height: 24px"
+          />
+        </div>
+        <!-- Canvas Size -->
+        <div class="flex items-center px-2 gap-1 h-10">
+          <span class="font-mono text-[8px] uppercase text-tertiary">W</span>
+          <input
+            class="w-12 border border-black p-0.5 text-[9px] font-mono outline-none"
+            id="artboard-w-input"
+            oninput="resizeArtboard('width', this.value)"
+            type="number"
+            value="600"
+          />
+          <span class="font-mono text-[8px] uppercase text-tertiary">H</span>
+          <input
+            class="w-12 border border-black p-0.5 text-[9px] font-mono outline-none"
+            id="artboard-h-input"
+            oninput="resizeArtboard('height', this.value)"
+            type="number"
+            value="800"
+          />
+        </div>
+        <!-- Undo / Redo -->
+        <div class="flex items-center px-1 h-10">
+          <button class="icon-btn" onclick="undoAction()" title="Undo (Ctrl+Z)">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >undo</span
+            >
+          </button>
+          <button class="icon-btn" onclick="redoAction()" title="Redo (Ctrl+Y)">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >redo</span
+            >
+          </button>
+        </div>
+        <!-- Flip tools -->
+        <div class="flex items-center px-1 h-10">
+          <button
+            class="icon-btn"
+            onclick="lockLayer()"
+            title="Lock/Unlock Layer"
+          >
+            <span
+              class="material-symbols-outlined"
+              id="lock-icon"
+              style="font-size: 18px"
+              >lock_open</span
+            >
+          </button>
+          <button
+            class="icon-btn"
+            onclick="toggleLayerVisibility()"
+            title="Show/Hide Layer"
+          >
+            <span
+              class="material-symbols-outlined"
+              id="visibility-icon"
+              style="font-size: 18px"
+              >visibility</span
+            >
+          </button>
+        </div>
+        <!-- Grid Toggle -->
+        <div class="flex items-center px-1 h-10">
+          <button
+            class="icon-btn"
+            onclick="toggleGrid()"
+            title="Toggle Grid"
+            id="grid-btn"
+          >
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >grid_on</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div
+        class="absolute inset-0 canvas-dot-grid overflow-auto"
+        id="canvas-container"
+      >
+        <div
+          id="canvas-inner"
+          style="
+            min-width: 100%;
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px;
+            box-sizing: border-box;
+          "
+        >
+          <div
+            class="relative bg-white border-2 border-black"
+            id="artboard"
+            style="
+              width: 600px;
+              height: 800px;
+              flex-shrink: 0;
+              box-shadow: 20px 20px 0px 0px rgba(0, 0, 192, 0.1);
+            "
+          >
+            <div class="canvas-resize-handle" id="artboard-resize-handle"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- STATUS BAR -->
+    <div
+      class="fixed bottom-0 left-0 right-80 h-6 bg-surface-container-highest border-t border-black px-4 flex items-center justify-between z-50"
+    >
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1 font-mono text-[9px] text-black">
+          <span
+            class="w-1.5 h-1.5 bg-primary animate-pulse inline-block"
+          ></span>
+          SYSTEM_LIVE
+        </span>
+        <div class="flex items-center gap-2 border-l border-black/20 pl-4">
+          <button
+            class="hover:text-primary"
+            onclick="adjustZoom(-0.1)"
+            title="Zoom Out"
+          >
+            <span class="material-symbols-outlined" style="font-size: 14px"
+              >remove</span
+            >
+          </button>
+          <span class="font-mono text-[9px]" id="zoom-val">100%</span>
+          <button
+            class="hover:text-primary"
+            onclick="adjustZoom(0.1)"
+            title="Zoom In"
+          >
+            <span class="material-symbols-outlined" style="font-size: 14px"
+              >add</span
+            >
+          </button>
+          <button
+            class="hover:text-primary"
+            onclick="adjustZoom(1 - currentZoom)"
+            title="Reset Zoom"
+          >
+            <span class="material-symbols-outlined" style="font-size: 14px"
+              >fit_screen</span
+            >
+          </button>
+        </div>
+      </div>
+      <div class="font-mono text-[9px] text-secondary" id="status-coords">
+        X: 0 Y: 0 | COLLAGE_ING_ENGINE_V4
+      </div>
+    </div>
+
+    <script>
+      // ===== STATE =====
+      const artboard = document.getElementById("artboard");
+      const canvasContainer = document.getElementById("canvas-container");
+      const artboardResizeHandle = document.getElementById(
+        "artboard-resize-handle",
+      );
+      const propertiesPanel = document.getElementById("properties-panel");
+      const statusCoords = document.getElementById("status-coords");
+      const zoomValDisplay = document.getElementById("zoom-val");
+      const artboardWInput = document.getElementById("artboard-w-input");
+      const artboardHInput = document.getElementById("artboard-h-input");
+
+      let selectedLayer = null;
+      let layerCount = 0;
+      let isDragging = false;
+      let isResizing = false;
+      let isArtboardResizing = false;
+      let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
+      let currentZoom = 1;
+      let handleMode = "resize";
+      let clipboard = null;
+      let gridVisible = true;
+      let lockedLayers = new Set();
+      let hiddenLayers = new Set();
+      let layerRotations = {};
+
+      // Undo/Redo stacks — store full artboard HTML snapshots
+      let undoStack = [];
+      let redoStack = [];
+
+      function saveState() {
+        undoStack.push(artboard.innerHTML);
+        if (undoStack.length > 50) undoStack.shift();
+        redoStack = [];
+      }
+
+      function undoAction() {
+        if (undoStack.length === 0) return;
+        redoStack.push(artboard.innerHTML);
+        const prev = undoStack.pop();
+        restoreArtboard(prev);
+      }
+
+      function redoAction() {
+        if (redoStack.length === 0) return;
+        undoStack.push(artboard.innerHTML);
+        const next = redoStack.pop();
+        restoreArtboard(next);
+      }
+
+      function restoreArtboard(html) {
+        // We need to keep the resize handle
+        artboard.innerHTML = html;
+        // Re-attach event listeners to all draggable layers
+        artboard.querySelectorAll(".draggable").forEach((layer) => {
+          layer.addEventListener("mousedown", startDrag);
+          layer.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectLayer(layer);
+          });
+          const handle = layer.querySelector(".resize-handle");
+          if (handle) handle.addEventListener("mousedown", startResize);
+        });
+        // Re-append resize handle
+        if (!document.getElementById("artboard-resize-handle")) {
+          const rh = document.createElement("div");
+          rh.className = "canvas-resize-handle";
+          rh.id = "artboard-resize-handle";
+          artboard.appendChild(rh);
+          rh.addEventListener("mousedown", startArtboardResize);
+        }
+        selectedLayer = null;
+        propertiesPanel.classList.add("opacity-50", "pointer-events-none");
+        updateLayersPanel();
+      }
+
+      // ===== ZOOM =====
+      canvasContainer.addEventListener(
+        "wheel",
+        (e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = -e.deltaY * 0.005;
+            // Mouse position relative to the canvas container
+            const rect = canvasContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            zoomToPoint(delta, mouseX, mouseY);
+          }
+          // Non-ctrl wheel: let native scroll happen freely (both axes)
+        },
+        { passive: false },
+      );
+
+      function zoomToPoint(delta, mouseX, mouseY) {
+        const prevZoom = currentZoom;
+        currentZoom = Math.min(Math.max(0.1, currentZoom + delta), 3);
+
+        // Point in the scroll space the mouse is over before zoom
+        const scrollX = canvasContainer.scrollLeft + mouseX;
+        const scrollY = canvasContainer.scrollTop + mouseY;
+
+        artboard.style.transform = `scale(${currentZoom})`;
+
+        // Update inner wrapper dimensions first so scroll space is correct
+        updateCanvasInner();
+
+        // Scale factor change ratio
+        const ratio = currentZoom / prevZoom;
+
+        // Adjust scroll so the point under the mouse stays fixed
+        canvasContainer.scrollLeft = scrollX * ratio - mouseX;
+        canvasContainer.scrollTop = scrollY * ratio - mouseY;
+
+        zoomValDisplay.innerText = `${Math.round(currentZoom * 100)}%`;
+      }
+
+      function adjustZoom(delta) {
+        // Called from buttons — zoom toward center of visible area
+        const cx = canvasContainer.offsetWidth / 2;
+        const cy = canvasContainer.offsetHeight / 2;
+        zoomToPoint(delta, cx, cy);
+      }
+
+      function updateCanvasInner() {
+        const aw = artboard.offsetWidth * currentZoom;
+        const ah = artboard.offsetHeight * currentZoom;
+        const inner = document.getElementById("canvas-inner");
+        const padded = 160;
+        inner.style.minWidth =
+          Math.max(aw + padded, canvasContainer.offsetWidth) + "px";
+        inner.style.minHeight =
+          Math.max(ah + padded, canvasContainer.offsetHeight) + "px";
+      }
+
+      // ===== KEYBOARD SHORTCUTS =====
+      window.addEventListener("keydown", (e) => {
+        const tag = document.activeElement.tagName;
+        const isEditing =
+          tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+        // Undo/Redo — always active
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          e.key.toLowerCase() === "z" &&
+          !e.shiftKey
+        ) {
+          e.preventDefault();
+          undoAction();
+          return;
+        }
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          (e.key.toLowerCase() === "y" ||
+            (e.key.toLowerCase() === "z" && e.shiftKey))
+        ) {
+          e.preventDefault();
+          redoAction();
+          return;
+        }
+
+        // Copy/Paste/Duplicate — always active (don't block on isEditing)
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+          if (selectedLayer) {
+            e.preventDefault();
+            copyLayer();
+            return;
+          }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+          if (clipboard) {
+            e.preventDefault();
+            pasteLayer();
+            return;
+          }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+          if (selectedLayer) {
+            e.preventDefault();
+            duplicateLayer();
+            return;
+          }
+        }
+
+        // These only fire when not in a text input
+        if (!isEditing) {
+          if (e.key === "Delete" || e.key === "Backspace") {
+            deleteSelectedLayer();
+            return;
+          }
+          // Arrow key nudge
+          if (selectedLayer && !lockedLayers.has(selectedLayer.id)) {
+            const step = e.shiftKey ? 10 : 1;
+            if (e.key === "ArrowLeft") {
+              selectedLayer.style.left =
+                (parseInt(selectedLayer.style.left) || 0) - step + "px";
+              e.preventDefault();
+            }
+            if (e.key === "ArrowRight") {
+              selectedLayer.style.left =
+                (parseInt(selectedLayer.style.left) || 0) + step + "px";
+              e.preventDefault();
+            }
+            if (e.key === "ArrowUp") {
+              selectedLayer.style.top =
+                (parseInt(selectedLayer.style.top) || 0) - step + "px";
+              e.preventDefault();
+            }
+            if (e.key === "ArrowDown") {
+              selectedLayer.style.top =
+                (parseInt(selectedLayer.style.top) || 0) + step + "px";
+              e.preventDefault();
+            }
+            updatePositionFields();
+          }
+        }
+      });
+
+      // ===== GRID TOGGLE =====
+      function toggleGrid() {
+        gridVisible = !gridVisible;
+        const btn = document.getElementById("grid-btn");
+        const container = document.getElementById("canvas-container");
+        if (gridVisible) {
+          container.classList.add("canvas-dot-grid");
+          btn.querySelector(".material-symbols-outlined").textContent =
+            "grid_on";
+        } else {
+          container.classList.remove("canvas-dot-grid");
+          btn.querySelector(".material-symbols-outlined").textContent =
+            "grid_off";
+        }
+      }
+
+      // ===== SIDEBAR =====
+      function toggleSidebar(panelId) {
+        document
+          .querySelectorAll('[id^="panel-"]')
+          .forEach((p) => p.classList.add("panel-hidden"));
+        document
+          .querySelectorAll(".sidebar-icon-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .getElementById(`panel-${panelId}`)
+          .classList.remove("panel-hidden");
+        document.getElementById(`btn-${panelId}`).classList.add("active");
+      }
+
+      // ===== CANVAS BG & RESIZE =====
+      function updateCanvasBg(color) {
+        artboard.style.backgroundColor = color;
+      }
+
+      function resizeArtboard(axis, val) {
+        const numVal = parseInt(val) || 0;
+        artboard.style[axis] = numVal + "px";
+        if (axis === "width") artboardWInput.value = numVal;
+        if (axis === "height") artboardHInput.value = numVal;
+        updateCanvasInner();
+      }
+
+      // ===== LAYER OPERATIONS =====
+      function lockLayer() {
+        if (!selectedLayer) return;
+        const id = selectedLayer.id;
+        const icon = document.getElementById("lock-icon");
+        if (lockedLayers.has(id)) {
+          lockedLayers.delete(id);
+          icon.textContent = "lock_open";
+          statusCoords.innerText = `LAYER UNLOCKED | COLLAGE_ING_ENGINE_V4`;
+        } else {
+          lockedLayers.add(id);
+          icon.textContent = "lock";
+          statusCoords.innerText = `LAYER LOCKED | COLLAGE_ING_ENGINE_V4`;
+        }
+      }
+
+      function toggleLayerVisibility() {
+        if (!selectedLayer) return;
+        const id = selectedLayer.id;
+        const icon = document.getElementById("visibility-icon");
+        if (hiddenLayers.has(id)) {
+          hiddenLayers.delete(id);
+          selectedLayer.style.visibility = "visible";
+          icon.textContent = "visibility";
+        } else {
+          hiddenLayers.add(id);
+          selectedLayer.style.visibility = "hidden";
+          icon.textContent = "visibility_off";
+        }
+        updateLayersPanel();
+      }
+
+      function flipLayer(axis) {
+        if (!selectedLayer) return;
+        saveState();
+        const inner =
+          selectedLayer.querySelector("img") ||
+          selectedLayer.querySelector(".content-inner");
+        if (!inner) return;
+        const current = inner.style.transform || "";
+        if (axis === "x") {
+          inner.style.transform = current.includes("scaleX(-1)")
+            ? current.replace("scaleX(-1)", "").trim()
+            : (current + " scaleX(-1)").trim();
+        } else {
+          inner.style.transform = current.includes("scaleY(-1)")
+            ? current.replace("scaleY(-1)", "").trim()
+            : (current + " scaleY(-1)").trim();
+        }
+      }
+
+      function rotateLayer(deg) {
+        if (!selectedLayer) return;
+        saveState();
+        const id = selectedLayer.id;
+        layerRotations[id] = ((layerRotations[id] || 0) + deg + 360) % 360;
+        // Normalize to -180..180 for display
+        let display = layerRotations[id];
+        if (display > 180) display -= 360;
+        applyLayerRotation(id);
+        document.getElementById("prop-rotation").value = display;
+        document.getElementById("prop-rotation-num").value = display;
+      }
+
+      function setRotationDirect(val) {
+        if (!selectedLayer) return;
+        const deg = parseFloat(val) || 0;
+        layerRotations[selectedLayer.id] = ((deg % 360) + 360) % 360;
+        applyLayerRotation(selectedLayer.id);
+      }
+
+      function applyLayerRotation(id) {
+        const layer = document.getElementById(id);
+        if (!layer) return;
+        const deg = layerRotations[id] || 0;
+        // Preserve any existing flip transforms on the layer itself
+        const currentTransform = layer.style.transform || "";
+        const noRotate = currentTransform
+          .replace(/rotate\([^)]*\)/g, "")
+          .trim();
+        layer.style.transform = `rotate(${deg}deg)${noRotate ? " " + noRotate : ""}`;
+      }
+
+      function duplicateLayer() {
+        if (!selectedLayer) return;
+        saveState();
+        const clone = selectedLayer.cloneNode(true);
+        layerCount++;
+        clone.id = `layer-el-${layerCount}`;
+        clone.style.left = parseInt(selectedLayer.style.left) + 20 + "px";
+        clone.style.top = parseInt(selectedLayer.style.top) + 20 + "px";
+        clone.style.zIndex = layerCount;
+        clone.classList.remove("layer-selected");
+        const handle = clone.querySelector(".resize-handle");
+        if (handle) handle.addEventListener("mousedown", startResize);
+        clone.addEventListener("mousedown", startDrag);
+        clone.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectLayer(clone);
+        });
+        artboard.appendChild(clone);
+        selectLayer(clone);
+        updateLayersPanel();
+      }
+
+      function copyLayer() {
+        if (!selectedLayer) return;
+        clipboard = {
+          type: selectedLayer.dataset.type,
+          content:
+            selectedLayer.dataset.type === "text"
+              ? selectedLayer.querySelector(".content-inner").innerText
+              : selectedLayer.querySelector("img")
+                ? selectedLayer.querySelector("img").src
+                : null,
+          label: selectedLayer.dataset.label,
+          style: {
+            width: selectedLayer.style.width,
+            height: selectedLayer.style.height,
+            opacity: selectedLayer.style.opacity,
+            mixBlendMode: selectedLayer.style.mixBlendMode,
+            zIndex: selectedLayer.style.zIndex,
+            backgroundColor: selectedLayer.style.backgroundColor,
+            border: selectedLayer.style.border,
+            borderRadius: selectedLayer.style.borderRadius,
+          },
+          textStyles:
+            selectedLayer.dataset.type === "text"
+              ? {
+                  fontFamily:
+                    selectedLayer.querySelector(".content-inner").style
+                      .fontFamily,
+                  fontSize:
+                    selectedLayer.querySelector(".content-inner").style
+                      .fontSize,
+                  fontWeight:
+                    selectedLayer.querySelector(".content-inner").style
+                      .fontWeight,
+                  fontStyle:
+                    selectedLayer.querySelector(".content-inner").style
+                      .fontStyle,
+                  textDecoration:
+                    selectedLayer.querySelector(".content-inner").style
+                      .textDecoration,
+                  textAlign:
+                    selectedLayer.querySelector(".content-inner").style
+                      .textAlign,
+                  color:
+                    selectedLayer.querySelector(".content-inner").style.color,
+                }
+              : null,
+        };
+        statusCoords.innerText = `COPIED: ${selectedLayer.dataset.label} | COLLAGE_ING_ENGINE_V4`;
+      }
+
+      function pasteLayer() {
+        if (!clipboard) return;
+        saveState();
+        const font = clipboard.textStyles
+          ? clipboard.textStyles.fontFamily
+          : "Courier New";
+        const label = (clipboard.label || "LAYER") + "_COPY";
+        addLayer(
+          clipboard.type,
+          clipboard.content,
+          label,
+          font,
+          clipboard.style,
+          clipboard.textStyles,
+          true,
+        );
+      }
+
+      function updateDimensions(axis, val) {
+        if (selectedLayer) selectedLayer.style[axis] = val + "px";
+      }
+
+      function updateOpacity(val) {
+        if (selectedLayer) {
+          selectedLayer.style.opacity = val / 100;
+          document.getElementById("prop-opacity-val").innerText = `${val}%`;
+        }
+      }
+
+      function updateSelectedStyle(prop, val) {
+        if (selectedLayer) {
+          selectedLayer.style[prop] = val;
+          if (prop === "zIndex")
+            document.getElementById("prop-zindex").value = val;
+        }
+      }
+
+      function changeZIndex(delta) {
+        if (!selectedLayer) return;
+        const current = parseInt(selectedLayer.style.zIndex) || 0;
+        updateSelectedStyle("zIndex", current + delta);
+      }
+
+      function deleteSelectedLayer() {
+        if (selectedLayer) {
+          saveState();
+          selectedLayer.remove();
+          selectedLayer = null;
+          propertiesPanel.classList.add("opacity-50", "pointer-events-none");
+          updateLayersPanel();
+        }
+      }
+
+      function updatePositionFields() {
+        if (!selectedLayer) return;
+        const x = document.getElementById("prop-x");
+        const y = document.getElementById("prop-y");
+        if (x) x.value = Math.round(parseInt(selectedLayer.style.left) || 0);
+        if (y) y.value = Math.round(parseInt(selectedLayer.style.top) || 0);
+      }
+
+      // ===== DRAG =====
+      function startDrag(e) {
+        if (isResizing || isArtboardResizing) return;
+        if (lockedLayers.has(e.currentTarget.id)) return;
+        isDragging = true;
+        selectedLayer = e.currentTarget;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = parseInt(selectedLayer.style.left) || 0;
+        initialTop = parseInt(selectedLayer.style.top) || 0;
+        document.addEventListener("mousemove", drag);
+        document.addEventListener("mouseup", stopDrag);
+      }
+
+      function drag(e) {
+        if (!isDragging || !selectedLayer) return;
+        const dx = (e.clientX - startX) / currentZoom;
+        const dy = (e.clientY - startY) / currentZoom;
+        selectedLayer.style.left = `${initialLeft + dx}px`;
+        selectedLayer.style.top = `${initialTop + dy}px`;
+        updatePositionFields();
+        statusCoords.innerText = `X: ${Math.round(initialLeft + dx)} Y: ${Math.round(initialTop + dy)} | COLLAGE_ING_ENGINE_V4`;
+      }
+
+      function stopDrag() {
+        if (isDragging) saveState();
+        isDragging = false;
+        document.removeEventListener("mousemove", drag);
+        document.removeEventListener("mouseup", stopDrag);
+      }
+
+      // ===== RESIZE =====
+      function startResize(e) {
+        e.stopPropagation();
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialWidth = selectedLayer.offsetWidth;
+        initialHeight = selectedLayer.offsetHeight;
+        document.addEventListener("mousemove", resize);
+        document.addEventListener("mouseup", stopResize);
+      }
+
+      function resize(e) {
+        if (!isResizing) return;
+        const dx = (e.clientX - startX) / currentZoom;
+        const dy = (e.clientY - startY) / currentZoom;
+        const nw = Math.max(20, initialWidth + dx);
+        const nh = Math.max(2, initialHeight + dy);
+        selectedLayer.style.width = nw + "px";
+        selectedLayer.style.height = nh + "px";
+        document.getElementById("prop-w").value = Math.round(nw);
+        document.getElementById("prop-h").value = Math.round(nh);
+      }
+
+      function stopResize() {
+        if (isResizing) saveState();
+        isResizing = false;
+        document.removeEventListener("mousemove", resize);
+        document.removeEventListener("mouseup", stopResize);
+      }
+
+      // ===== ARTBOARD RESIZE =====
+      function startArtboardResize(e) {
+        e.stopPropagation();
+        isArtboardResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialWidth = artboard.offsetWidth;
+        initialHeight = artboard.offsetHeight;
+        document.addEventListener("mousemove", artboardResize);
+        document.addEventListener("mouseup", stopArtboardResize);
+      }
+
+      function artboardResize(e) {
+        if (!isArtboardResizing) return;
+        const dx = (e.clientX - startX) / currentZoom;
+        const dy = (e.clientY - startY) / currentZoom;
+        const nw = Math.max(100, initialWidth + dx);
+        const nh = Math.max(100, initialHeight + dy);
+        artboard.style.width = nw + "px";
+        artboard.style.height = nh + "px";
+        artboardWInput.value = Math.round(nw);
+        artboardHInput.value = Math.round(nh);
+      }
+
+      function stopArtboardResize() {
+        isArtboardResizing = false;
+        document.removeEventListener("mousemove", artboardResize);
+        document.removeEventListener("mouseup", stopArtboardResize);
+      }
+
+      artboardResizeHandle.addEventListener("mousedown", startArtboardResize);
+
+      artboard.addEventListener("click", (e) => {
+        if (e.target === artboard || e.target === artboardResizeHandle) {
+          document
+            .querySelectorAll(".draggable")
+            .forEach((l) => l.classList.remove("layer-selected"));
+          selectedLayer = null;
+          propertiesPanel.classList.add("opacity-50", "pointer-events-none");
+        }
+      });
+
+      // ===== LAYER CREATION =====
+      function addLayer(
+        type,
+        content,
+        label = "LAYER",
+        font = "Courier New",
+        styleOverrides = null,
+        textStyleOverrides = null,
+        isPaste = false,
+      ) {
+        layerCount++;
+        const layerIdString = `LAYER_${String(layerCount).padStart(2, "0")}`;
+        const layer = document.createElement("div");
+        layer.id = `layer-el-${layerCount}`;
+        layer.className =
+          "absolute draggable select-none border border-transparent";
+        layer.style.left = isPaste ? "70px" : "50px";
+        layer.style.top = isPaste ? "70px" : "50px";
+        layer.style.zIndex = layerCount;
+        layer.dataset.label = label;
+        layer.dataset.type = type;
+
+        if (styleOverrides) {
+          Object.assign(layer.style, styleOverrides);
+        }
+
+        if (type === "image" && content) {
+          layer.classList.add("flex", "items-start", "justify-start");
+          const img = new Image();
+          img.src = content;
+          img.crossOrigin = "anonymous";
+          img.className = "pointer-events-none block w-full h-full";
+          img.onload = () => {
+            if (!styleOverrides || !styleOverrides.width) {
+              const maxW = 400;
+              const ratio = img.naturalWidth / img.naturalHeight;
+              if (img.naturalWidth > maxW) {
+                layer.style.width = maxW + "px";
+                layer.style.height = maxW / ratio + "px";
+              } else {
+                layer.style.width = img.naturalWidth + "px";
+                layer.style.height = img.naturalHeight + "px";
+              }
+              updatePropsDimensionFields(layer);
+            }
+          };
+          layer.appendChild(img);
+        } else if (type === "text") {
+          const text = document.createElement("div");
+          text.innerText = content || "NEW_TEXT";
+          text.style.fontFamily = font;
+          text.style.fontSize = "36px";
+          text.className =
+            "content-inner font-bold p-2 text-primary pointer-events-none w-full h-full whitespace-pre-wrap";
+          if (!text.style.color) text.style.color = "#bc0100";
+          if (textStyleOverrides) Object.assign(text.style, textStyleOverrides);
+          layer.appendChild(text);
+          setTimeout(() => {
+            const rect = text.getBoundingClientRect();
+            if (!styleOverrides || !styleOverrides.width) {
+              layer.style.width = rect.width / currentZoom + "px";
+              layer.style.height = rect.height / currentZoom + "px";
+            }
+            updatePropsDimensionFields(layer);
+          }, 0);
+        } else if (type === "shape") {
+          // content = { shape, fill, borderColor, borderWidth }
+          const shapeData = content;
+          layer.style.width = styleOverrides?.width || "120px";
+          layer.style.height = styleOverrides?.height || "80px";
+          layer.style.backgroundColor = shapeData.fill || "#bc0100";
+          layer.style.border = `${shapeData.borderWidth || 2}px solid ${shapeData.borderColor || "#000000"}`;
+          if (shapeData.shape === "circle") {
+            layer.style.borderRadius = "50%";
+          }
+          if (shapeData.shape === "line") {
+            layer.style.height = "2px";
+            layer.style.width = "150px";
+            layer.style.backgroundColor = shapeData.borderColor || "#000000";
+          }
+        }
+
+        const tag = document.createElement("div");
+        tag.className =
+          "layer-tag absolute -top-4 left-0 bg-black text-white px-1 text-[8px] font-mono pointer-events-none z-10 whitespace-nowrap";
+        tag.innerText = label || layerIdString;
+        layer.appendChild(tag);
+
+        const handle = document.createElement("div");
+        handle.className = "resize-handle";
+        handle.addEventListener("mousedown", startResize);
+        layer.appendChild(handle);
+
+        layer.addEventListener("mousedown", startDrag);
+        layer.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectLayer(layer);
+        });
+
+        artboard.appendChild(layer);
+        selectLayer(layer);
+        saveState();
+        updateLayersPanel();
+      }
+
+      function addTextLayer() {
+        const content =
+          document.getElementById("text-content-input").value || "NEW_TEXT";
+        const font = document.getElementById("text-font-input").value;
+        const size = document.getElementById("text-size-input").value;
+        const color = document.getElementById("text-color-preset").value;
+        addLayer("text", content, "TEXT_LAYER", font, null, {
+          fontSize: size + "px",
+          color: color,
+          fontFamily: font,
+        });
+      }
+
+      function addShapeLayer(shape) {
+        const fill = document.getElementById("shape-fill-color").value;
+        const borderColor = document.getElementById("shape-border-color").value;
+        const borderWidth = document.getElementById("shape-border-width").value;
+        addLayer(
+          "shape",
+          { shape, fill, borderColor, borderWidth },
+          `SHAPE_${shape.toUpperCase()}`,
+        );
+      }
+
+      function updatePropsDimensionFields(layer) {
+        const w = parseInt(layer.style.width);
+        const h = parseInt(layer.style.height);
+        if (selectedLayer === layer) {
+          document.getElementById("prop-w").value = isNaN(w)
+            ? Math.round(layer.offsetWidth)
+            : w;
+          document.getElementById("prop-h").value = isNaN(h)
+            ? Math.round(layer.offsetHeight)
+            : h;
+        }
+      }
+
+      function selectLayer(layer) {
+        document
+          .querySelectorAll(".draggable")
+          .forEach((l) => l.classList.remove("layer-selected"));
+        layer.classList.add("layer-selected");
+        selectedLayer = layer;
+
+        propertiesPanel.classList.remove("opacity-50", "pointer-events-none");
+        document.getElementById("prop-id").value = layer.dataset.label || "";
+        document.getElementById("prop-opacity").value =
+          (parseFloat(layer.style.opacity) || 1) * 100;
+        document.getElementById("prop-opacity-val").innerText =
+          `${Math.round((parseFloat(layer.style.opacity) || 1) * 100)}%`;
+        document.getElementById("prop-blend").value =
+          layer.style.mixBlendMode || "normal";
+        document.getElementById("prop-zindex").value = layer.style.zIndex || 0;
+
+        // Lock/visibility icons
+        document.getElementById("lock-icon").textContent = lockedLayers.has(
+          layer.id,
+        )
+          ? "lock"
+          : "lock_open";
+        document.getElementById("visibility-icon").textContent =
+          hiddenLayers.has(layer.id) ? "visibility_off" : "visibility";
+
+        // Lock H field for line shapes — restore normal
+        const propH = document.getElementById("prop-h");
+        propH.readOnly = false;
+        propH.style.opacity = "1";
+
+        // Populate rotation
+        const rawDeg = layerRotations[layer.id] || 0;
+        let displayDeg = rawDeg > 180 ? rawDeg - 360 : rawDeg;
+        document.getElementById("prop-rotation").value = displayDeg;
+        document.getElementById("prop-rotation-num").value = displayDeg;
+
+        updatePropsDimensionFields(layer);
+        updatePositionFields();
+
+        // Show/hide type-specific panels
+        const textContainer = document.getElementById(
+          "text-controls-container",
+        );
+        const shapeContainer = document.getElementById(
+          "shape-controls-container",
+        );
+        const handleContainer = document.getElementById(
+          "handle-mode-container",
+        );
+
+        textContainer.classList.add("hidden");
+        shapeContainer.classList.add("hidden");
+        handleContainer.classList.add("hidden");
+
+        if (layer.dataset.type === "text") {
+          textContainer.classList.remove("hidden");
+          const inner = layer.querySelector(".content-inner");
+          const fs = parseInt(inner?.style.fontSize) || 36;
+          document.getElementById("prop-font-size").value = fs;
+          document.getElementById("prop-font-size-val").innerText = fs + "px";
+          // Populate font family dropdown
+          const ff =
+            inner?.style.fontFamily?.replace(/['"]/g, "").trim() ||
+            "Courier New";
+          const ffSelect = document.getElementById("prop-font-family");
+          // Try to match option
+          const opts = Array.from(ffSelect.options);
+          const match = opts.find((o) => o.value === ff);
+          if (match) ffSelect.value = ff;
+          // Populate color picker
+          const col = inner?.style.color || "#bc0100";
+          document.getElementById("prop-text-color").value = rgbToHex(col);
+        } else if (layer.dataset.type === "shape") {
+          shapeContainer.classList.remove("hidden");
+          // Populate shape pickers from current layer styles
+          const currentBg = layer.style.backgroundColor || "#bc0100";
+          document.getElementById("prop-shape-fill").value =
+            rgbToHex(currentBg);
+          // Parse border
+          const borderMatch = layer.style.border.match(/(\d+)px solid (.+)/);
+          if (borderMatch) {
+            document.getElementById("prop-shape-border-width").value =
+              borderMatch[1];
+            document.getElementById("prop-shape-border-color").value = rgbToHex(
+              borderMatch[2],
+            );
+          }
+        } else {
+          // image
+          handleContainer.classList.remove("hidden");
+          if (handleMode === "crop") layer.classList.add("crop-mode");
+          else layer.classList.remove("crop-mode");
+        }
+
+        toggleSidebar("props");
+        updateLayersPanel();
+      }
+
+      function renameSelectedLayer(val) {
+        if (selectedLayer) {
+          selectedLayer.dataset.label = val;
+          const tag = selectedLayer.querySelector(".layer-tag");
+          if (tag)
+            tag.innerText = val || `LAYER_${selectedLayer.id.split("-").pop()}`;
+          updateLayersPanel();
+        }
+      }
+
+      function setHandleMode(mode) {
+        handleMode = mode;
+        document.getElementById("mode-resize").className =
+          `flex-1 p-2 font-mono text-[9px] uppercase flex items-center justify-center gap-1 ${mode === "resize" ? "bg-black text-white" : ""}`;
+        document.getElementById("mode-crop").className =
+          `flex-1 p-2 font-mono text-[9px] uppercase flex items-center justify-center gap-1 ${mode === "crop" ? "bg-black text-white" : ""}`;
+        if (selectedLayer && selectedLayer.dataset.type === "image") {
+          if (mode === "crop") selectedLayer.classList.add("crop-mode");
+          else selectedLayer.classList.remove("crop-mode");
+        }
+      }
+
+      function toggleTextStyle(style) {
+        if (!selectedLayer || selectedLayer.dataset.type !== "text") return;
+        const inner = selectedLayer.querySelector(".content-inner");
+        if (style === "bold")
+          inner.style.fontWeight =
+            inner.style.fontWeight === "bold" ? "normal" : "bold";
+        if (style === "italic")
+          inner.style.fontStyle =
+            inner.style.fontStyle === "italic" ? "normal" : "italic";
+        if (style === "underline")
+          inner.style.textDecoration =
+            inner.style.textDecoration === "underline" ? "none" : "underline";
+        saveState();
+      }
+
+      function toggleTextAllCaps() {
+        if (!selectedLayer || selectedLayer.dataset.type !== "text") return;
+        const inner = selectedLayer.querySelector(".content-inner");
+        inner.style.textTransform =
+          inner.style.textTransform === "uppercase" ? "none" : "uppercase";
+        saveState();
+      }
+
+      function updateTextStyle(prop, val) {
+        if (!selectedLayer || selectedLayer.dataset.type !== "text") return;
+        const inner = selectedLayer.querySelector(".content-inner");
+        inner.style[prop] = val;
+        if (prop === "fontSize")
+          document.getElementById("prop-font-size-val").innerText = val;
+      }
+
+      function updateDimensions(axis, val) {
+        if (selectedLayer) selectedLayer.style[axis] = val + "px";
+      }
+
+      // ===== LAYERS PANEL =====
+      function updateLayersPanel() {
+        const list = document.getElementById("layers-list");
+        const layers = Array.from(
+          artboard.querySelectorAll(".draggable"),
+        ).reverse();
+        const countEl = document.getElementById("layer-count-display");
+        countEl.textContent = `${layers.length} layer${layers.length !== 1 ? "s" : ""}`;
+
+        if (layers.length === 0) {
+          list.innerHTML =
+            '<div class="p-4 font-mono text-[9px] text-tertiary uppercase text-center">No layers yet.</div>';
+          return;
+        }
+
+        list.innerHTML = layers
+          .map((layer) => {
+            const isSelected = selectedLayer && selectedLayer.id === layer.id;
+            const isLocked = lockedLayers.has(layer.id);
+            const isHidden = hiddenLayers.has(layer.id);
+            const typeIcon =
+              layer.dataset.type === "image"
+                ? "image"
+                : layer.dataset.type === "text"
+                  ? "title"
+                  : "rectangle";
+            return `
+            <div class="flex items-center gap-2 px-3 py-2 border-b border-black/10 cursor-pointer hover:bg-surface-container-high ${isSelected ? "bg-secondary text-white" : ""}"
+                 onclick="selectLayerById('${layer.id}')" style="font-family: 'Courier New', monospace;">
+                <span class="material-symbols-outlined" style="font-size:14px; ${isSelected ? "color:white" : ""}">${typeIcon}</span>
+                <span class="text-[9px] uppercase flex-1 truncate">${layer.dataset.label || layer.id}</span>
+                <span class="material-symbols-outlined" style="font-size:12px; opacity:0.5; ${isSelected ? "color:white" : ""}">${isLocked ? "lock" : ""}</span>
+                <span class="material-symbols-outlined" style="font-size:12px; opacity:0.5; ${isSelected ? "color:white" : ""}">${isHidden ? "visibility_off" : ""}</span>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function selectLayerById(id) {
+        const layer = document.getElementById(id);
+        if (layer) selectLayer(layer);
+      }
+
+      // ===== SHAPE RECOLOR =====
+      function updateShapeFill(color) {
+        if (!selectedLayer || selectedLayer.dataset.type !== "shape") return;
+        selectedLayer.style.backgroundColor = color;
+      }
+
+      function updateShapeBorder() {
+        if (!selectedLayer || selectedLayer.dataset.type !== "shape") return;
+        const color = document.getElementById("prop-shape-border-color").value;
+        const width = document.getElementById("prop-shape-border-width").value;
+        selectedLayer.style.border = `${width}px solid ${color}`;
+      }
+
+      function rgbToHex(color) {
+        if (!color || color === "transparent") return "#000000";
+        if (color.startsWith("#")) return color;
+        const m = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (!m) return "#000000";
+        return (
+          "#" +
+          [m[1], m[2], m[3]]
+            .map((n) => parseInt(n).toString(16).padStart(2, "0"))
+            .join("")
+        );
+      }
+
+      // ===== EXPORT — Canvas 2D compositor (handles blend modes natively) =====
+      async function exportCanvas() {
+        const status = document.getElementById("status-coords");
+        status.innerText = "COMPOSITING LAYERS...";
+
+        const artW = artboard.offsetWidth;
+        const artH = artboard.offsetHeight;
+        const scale = 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = artW * scale;
+        canvas.height = artH * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(scale, scale);
+
+        // Fill background
+        ctx.fillStyle = artboard.style.backgroundColor || "#ffffff";
+        ctx.fillRect(0, 0, artW, artH);
+
+        // Gather all layers sorted by z-index
+        const layers = Array.from(artboard.querySelectorAll(".draggable")).sort(
+          (a, b) =>
+            (parseInt(a.style.zIndex) || 0) - (parseInt(b.style.zIndex) || 0),
+        );
+
+        for (const layer of layers) {
+          if (hiddenLayers.has(layer.id)) continue;
+
+          const x = parseFloat(layer.style.left) || 0;
+          const y = parseFloat(layer.style.top) || 0;
+          const w = layer.offsetWidth;
+          const h = layer.offsetHeight;
+          const opacity = parseFloat(layer.style.opacity) || 1;
+          const blend = layer.style.mixBlendMode || "normal";
+          const rotation = layerRotations[layer.id] || 0;
+
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.globalCompositeOperation = blendModeToComposite(blend);
+
+          // Apply rotation around layer center
+          if (rotation !== 0) {
+            ctx.translate(x + w / 2, y + h / 2);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.translate(-(w / 2), -(h / 2));
+          } else {
+            ctx.translate(x, y);
+          }
+
+          const type = layer.dataset.type;
+
+          if (type === "image") {
+            const img = layer.querySelector("img");
+            if (img && img.complete && img.naturalWidth > 0) {
+              // Check for flip transforms
+              const imgTransform = img.style.transform || "";
+              const flipX = imgTransform.includes("scaleX(-1)");
+              const flipY = imgTransform.includes("scaleY(-1)");
+              if (flipX || flipY) {
+                ctx.save();
+                ctx.translate(flipX ? w : 0, flipY ? h : 0);
+                ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+              }
+              if (layer.classList.contains("crop-mode")) {
+                ctx.drawImage(img, 0, 0, w, h);
+              } else {
+                ctx.drawImage(img, 0, 0, w, h);
+              }
+              if (flipX || flipY) ctx.restore();
+            }
+          } else if (type === "text") {
+            const inner = layer.querySelector(".content-inner");
+            if (inner) {
+              // Render text via a temp canvas using html2canvas for accurate text rendering
+              try {
+                const textCanvas = await html2canvas(inner, {
+                  backgroundColor: null,
+                  scale: scale,
+                  logging: false,
+                  useCORS: true,
+                });
+                ctx.drawImage(textCanvas, 0, 0, w, h);
+              } catch {
+                // Fallback: draw text manually
+                ctx.font = `${inner.style.fontWeight || ""} ${inner.style.fontSize || "36px"} ${inner.style.fontFamily || "Courier New"}`;
+                ctx.fillStyle = inner.style.color || "#bc0100";
+                ctx.fillText(
+                  inner.innerText,
+                  8,
+                  parseInt(inner.style.fontSize || 36) + 8,
+                );
+              }
+            }
+          } else if (type === "shape") {
+            ctx.fillStyle = layer.style.backgroundColor || "transparent";
+            const borderMatch = (layer.style.border || "").match(
+              /(\d+)px solid (.+)/,
+            );
+            const bw = borderMatch ? parseInt(borderMatch[1]) : 0;
+            const bc = borderMatch ? borderMatch[2] : "transparent";
+
+            if (
+              layer.style.borderRadius &&
+              layer.style.borderRadius !== "0px"
+            ) {
+              // circle
+              ctx.beginPath();
+              ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+              ctx.fill();
+              if (bw > 0) {
+                ctx.strokeStyle = bc;
+                ctx.lineWidth = bw;
+                ctx.stroke();
+              }
+            } else {
+              ctx.fillRect(0, 0, w, h);
+              if (bw > 0) {
+                ctx.strokeStyle = bc;
+                ctx.lineWidth = bw;
+                ctx.strokeRect(bw / 2, bw / 2, w - bw, h - bw);
+              }
+            }
+          }
+
+          ctx.restore();
+        }
+
+        // Download
+        try {
+          const link = document.createElement("a");
+          link.download = `collage_${Date.now()}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          status.innerText = "EXPORT_COMPLETE | COLLAGE_ING_ENGINE_V4";
+        } catch (err) {
+          console.error(err);
+          status.innerText = "EXPORT_FAILED | RETRY_REQUIRED";
+        }
+      }
+
+      // Map CSS mix-blend-mode values to Canvas 2D globalCompositeOperation
+      function blendModeToComposite(mode) {
+        const map = {
+          normal: "source-over",
+          multiply: "multiply",
+          screen: "screen",
+          overlay: "overlay",
+          darken: "darken",
+          lighten: "lighten",
+          "color-dodge": "color-dodge",
+          "color-burn": "color-burn",
+          "hard-light": "hard-light",
+          "soft-light": "soft-light",
+          difference: "difference",
+          exclusion: "exclusion",
+          hue: "hue",
+          saturation: "saturation",
+          color: "color",
+          luminosity: "luminosity",
+        };
+        return map[mode] || "source-over";
+      }
+
+      // ===== UPLOAD =====
+      function simulateUpload() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.multiple = true;
+        input.onchange = (e) => {
+          Array.from(e.target.files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (f) => {
+              const src = f.target.result;
+              const name = file.name.split(".")[0].toUpperCase();
+              // Add to assets panel
+              const assetsList = document.getElementById("assets-list");
+              const row = document.createElement("div");
+              row.className =
+                "flex items-center gap-2 border-2 border-black hover:border-primary cursor-pointer group bg-white";
+              row.onclick = () => addLayer("image", src, name);
+              row.innerHTML = `
+                        <img class="w-10 h-10 object-cover grayscale group-hover:grayscale-0 flex-shrink-0 block" src="${src}"/>
+                        <span class="font-mono text-[9px] uppercase truncate">${name}</span>`;
+              assetsList.insertBefore(row, assetsList.firstChild);
+              // Also drop onto canvas immediately
+              addLayer("image", src, name);
+            };
+            reader.readAsDataURL(file);
+          });
+        };
+        input.click();
+      }
+
+      // ===== MOUSE POSITION TRACKING =====
+      artboard.addEventListener("mousemove", (e) => {
+        if (!isDragging) {
+          const rect = artboard.getBoundingClientRect();
+          const x = Math.round((e.clientX - rect.left) / currentZoom);
+          const y = Math.round((e.clientY - rect.top) / currentZoom);
+          statusCoords.innerText = `X: ${x} Y: ${y} | COLLAGE_ING_ENGINE_V4`;
+        }
+      });
+
+      // ===== INIT =====
+      window.onload = () => {
+        addLayer("image", "/assets/default.jpg", "SCAVI_MAP");
+        undoStack = []; // Clear initial state from stack so first undo goes to empty canvas
+      };
+    </script>
+  </body>
+</html>
